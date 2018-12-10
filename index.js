@@ -93,7 +93,7 @@ function normalizeGPLIdentifiers (argument) {
       argument.license = license.replace('-or-later', '')
       delete argument.plus
     }
-  } else {
+  } else if (argument.left && argument.right) {
     argument.left = normalizeGPLIdentifiers(argument.left)
     argument.right = normalizeGPLIdentifiers(argument.right)
   }
@@ -104,7 +104,9 @@ function endsWith (string, substring) {
   return string.indexOf(substring) === string.length - 1
 }
 
-module.exports = function (first, second) {
+module.exports = function (first, second, options) {
+  options = options || {}
+  parse = options.parse || parse
   return recurse(
     normalizeGPLIdentifiers(parse(first)),
     normalizeGPLIdentifiers(parse(second))

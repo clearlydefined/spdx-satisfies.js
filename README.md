@@ -28,4 +28,9 @@ assert(satisfies(
 assert(satisfies('(MIT OR GPL-2.0)', '(ISC OR MIT)'))
 assert(satisfies('(MIT AND GPL-2.0)', '(MIT OR GPL-2.0)'))
 assert(!satisfies('(MIT AND GPL-2.0)', '(ISC OR GPL-2.0)'))
+
+// bring your own parser
+satisfies('MIT', 'MIT', {
+  parse: function (expression) { return {license: 'MIT'} }
+})
 ```
