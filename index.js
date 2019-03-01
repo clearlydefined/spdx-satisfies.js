@@ -1,7 +1,6 @@
 var compare = require('spdx-compare')
 var parse = require('spdx-expression-parse')
 var ranges = require('spdx-ranges')
-var { uniqWith, isEqual } = require('lodash')
 
 var rangesAreCompatible = function (first, second) {
   return (
@@ -95,9 +94,8 @@ function licenseString(e) {
  */
 function expand(expression) {
   var expanded = Array.from(expandInner(expression))
-  var result = uniqWith(expanded.filter(e => Object.keys(e).length).map(e => Object.keys(e).sort()), isEqual)
-  for (var i = 0; i < result.length; i++) result[i] = result[i].map(license => expanded[i][license])
-  return result
+  var sortedLicenseLists = expanded.filter(e => Object.keys(e).length).map(e => Object.keys(e).sort())
+  return sortedLicenseLists.map((list, i) => list.map(license => expanded[i][license]))
 }
 
 function expandInner(expression) {
@@ -115,13 +113,15 @@ function expandInner(expression) {
 
 function isANDCompatible(one, two) {
   if (one.length !== two.length) return false
-  for (var i = 0; i < one.length; i++) if (!licensesAreCompatible(one[i], two[i])) return false
-  return true
+  for (var i = 0; i < one.length; i++) if (licensesAreCompatible(one[i], two[i])) return true
+  return false
 }
 
-module.exports = function(first, second, options) {
+function satisfies(first, second, options) {
   var parser = (options || {}).parse || parse
   var one = expand(normalizeGPLIdentifiers(parser(first)))
   var two = expand(normalizeGPLIdentifiers(parser(second)))
   return one.some(o => two.some(t => isANDCompatible(o, t)))
 }
+
+module.exports = satisfies
