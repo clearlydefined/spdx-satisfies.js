@@ -93,9 +93,15 @@ function licenseString(e) {
  * @returns {[string]}
  */
 function expand(expression) {
-  var expanded = Array.from(expandInner(expression))
-  var sortedLicenseLists = expanded.filter(e => Object.keys(e).length).map(e => Object.keys(e).sort())
-  return sortedLicenseLists.map((list, i) => list.map(license => expanded[i][license]))
+  return sort(Array.from(expandInner(expression)))
+}
+
+function flatten(expression) {
+  const expanded = Array.from(expandInner(expression))
+  const flattened = expanded.reduce((result, clause) => {
+    return { ...result, ...clause }
+  }, {})
+  return sort([flattened])
 }
 
 function expandInner(expression) {
@@ -111,16 +117,19 @@ function expandInner(expression) {
   }
 }
 
+function sort(licenseList) {
+  var sortedLicenseLists = licenseList.filter(e => Object.keys(e).length).map(e => Object.keys(e).sort())
+  return sortedLicenseLists.map((list, i) => list.map(license => licenseList[i][license]))
+}
+
 function isANDCompatible(one, two) {
-  if (one.length !== two.length) return false
-  for (var i = 0; i < one.length; i++) if (licensesAreCompatible(one[i], two[i])) return true
-  return false
+  return one.every(o => two.some(t => licensesAreCompatible(o, t)))
 }
 
 function satisfies(first, second, options) {
   var parser = (options || {}).parse || parse
   var one = expand(normalizeGPLIdentifiers(parser(first)))
-  var two = expand(normalizeGPLIdentifiers(parser(second)))
+  var two = flatten(normalizeGPLIdentifiers(parser(second)))
   return one.some(o => two.some(t => isANDCompatible(o, t)))
 }
 
